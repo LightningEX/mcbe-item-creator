@@ -292,7 +292,7 @@ function performExport(data) {
             "name": `${data.namespace}_behavior`,
             "uuid": generateUUID(),
             "version": [1, 0, 0],
-            "min_engine_version": [1, 20, 0]
+            "min_engine_version": [1, 21, 0]
         },
         "modules": [
             {
@@ -308,7 +308,7 @@ function performExport(data) {
     // Item JSON file for behavior pack
     const itemComponents = buildItemComponents(data);
     const itemJson = {
-        "format_version": "1.20.0",
+        "format_version": "1.21.0",
         "minecraft:item": {
             "description": {
                 "identifier": `${data.namespace}:${data.itemName}`,
@@ -331,7 +331,7 @@ function performExport(data) {
             "name": `${data.namespace}_resource`,
             "uuid": generateUUID(),
             "version": [1, 0, 0],
-            "min_engine_version": [1, 20, 0]
+            "min_engine_version": [1, 21, 0]
         },
         "modules": [
             {
