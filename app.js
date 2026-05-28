@@ -344,8 +344,8 @@ function performExport(data) {
     };
     resourcePack.file('manifest.json', JSON.stringify(resourceManifest, null, 2));
     
-    // Language file
-    const langContent = `item.${data.namespace}.${data.itemName}.name=${data.displayName}`;
+    // Language file with proper localization
+    const langContent = buildLanguageFile(data);
     resourcePack.folder('texts').file('en_US.lang', langContent);
     
     // Icon/Texture
@@ -385,6 +385,21 @@ function buildItemComponents(data) {
         "minecraft:max_stack_size": data.maxStackSize
     };
     
+    // Add display name
+    components["minecraft:display_name"] = {
+        "value": data.displayName
+    };
+    
+    // Add lore if present
+    if (data.lore && data.lore.length > 0) {
+        const loreLines = data.lore.split('\n').filter(line => line.trim().length > 0);
+        if (loreLines.length > 0) {
+            components["minecraft:lore"] = {
+                "lines": loreLines
+            };
+        }
+    }
+    
     if (data.useDuration > 0) {
         components["minecraft:use_duration"] = data.useDuration;
     }
@@ -399,9 +414,10 @@ function buildItemComponents(data) {
         };
     }
     
-    if (data.durability > 0) {
+    // Always include durability component if durability is set (even if 0)
+    if (data.itemType === 'tool' || data.itemType === 'weapon' || data.itemType === 'armor' || data.durability > 0) {
         components["minecraft:durability"] = {
-            "max_durability": data.durability
+            "max_durability": data.durability > 0 ? data.durability : 100
         };
     }
     
@@ -431,15 +447,62 @@ function buildItemComponents(data) {
         }
     });
     
-    // Add enchantments
+    // Add enchantments with proper Bedrock format
     if (data.enchantments.length > 0) {
+        // Add enchantable component
         components["minecraft:enchantable"] = {
             "slots": ["weapon.mainhand", "weapon.offhand"],
             "value": 10
         };
+        
+        // Add stored enchantments component with actual enchantment data
+        const storedEnchantments = [];
+        data.enchantments.forEach(ench => {
+            storedEnchantments.push({
+                "id": convertEnchantmentToBedrockId(ench.type),
+                "lvl": ench.level
+            });
+        });
+        
+        if (storedEnchantments.length > 0) {
+            components["minecraft:item_properties"] = {
+                "enchantments": storedEnchantments
+            };
+        }
     }
     
     return components;
+}
+
+function convertEnchantmentToBedrockId(enchantmentType) {
+    // Map enchantment names to Bedrock enchantment IDs
+    const enchantmentMap = {
+        'sharpness': 'sharpness',
+        'efficiency': 'efficiency',
+        'protection': 'protection',
+        'fortune': 'fortune',
+        'unbreaking': 'unbreaking',
+        'knockback': 'knockback',
+        'fireaspect': 'fire_aspect',
+        'silktouch': 'silk_touch'
+    };
+    
+    return enchantmentMap[enchantmentType] || enchantmentType;
+}
+
+function buildLanguageFile(data) {
+    // Create language file with item name and lore localization
+    let langContent = `item.${data.namespace}.${data.itemName}.name=${data.displayName}\n`;
+    
+    // Add lore lines if present
+    if (data.lore && data.lore.length > 0) {
+        const loreLines = data.lore.split('\n').filter(line => line.trim().length > 0);
+        loreLines.forEach((line, index) => {
+            langContent += `item.${data.namespace}.${data.itemName}.lore.${index}=${line}\n`;
+        });
+    }
+    
+    return langContent;
 }
 
 // ==================== Utility Functions ====================
